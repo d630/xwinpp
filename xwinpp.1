@@ -1,0 +1,246 @@
+.\" Manpage of xwinpp/v1.0.0.2
+.\" written with GNU Emacs/v24.3.1 and markdown-mode/v1.8.1
+.\" generated with Ronn/v0.7.3
+.
+.TH "XWINPP" "1" "2014-02-17" "0.1.0.2" "User Manual"
+.
+.SH "NAME"
+\fBxwinpp\fR \- prepare a list of X windows
+.
+.SH "SYNOPSIS"
+xwinpp (\-|\-F|\-h|\-v) [\-s] [\-P] (\-p|\-r|\-t)
+.
+.SH "REQUIREMENT"
+GNU bash, GNU sed, xprop, xwininfo
+.
+.SH "DESCRIPTION"
+\fBxwinpp\fR is a bash shell script that takes a list of X window ids and performs some actions on it\. Mainly, \fBxwinpp\fR is written to process a preparing output with variables on that list\. A typical output looks like this:
+.
+.P
+desk_curr=0
+.br
+desk_select=( 0 )
+.br
+win_active=0x2c00022
+.br
+win_active_geo_x_y=( 0,1 )
+.br
+win_active_geo_w_h=( 1680,1049 )
+.br
+win_active_frame_extents=0,0,0,0
+.br
+win_active_tags=
+.br
+win_xid=( 0x00e00002 0x024000a3 0x014b5c9f 0x02c00022 )
+.br
+win_number=4
+.br
+win_geo_x_y=( 0,1 0,1 0,1 0,1 )
+.br
+win_geo_w_h=( 1680,1049 1680,1049 1680,1049 1680,1049 )
+.br
+win_frame_extents=( 0,0,0,0 0,0,0,0 0,0,0,0 0,0,0,0 )
+.br
+win_tags=( )
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-\fR
+Get X window ids by reading from standard input; \fB\-\fR must be the first argument\.
+.
+.TP
+\fB\-F\fR, \fB\-file\fR \fIFILE\fR
+Obtain X window ids from \fIFILE\fR, not from standard input\.
+.
+.TP
+\fB\-P\fR, \fB\-active\-win\-pos\fR \fIPOS\fR
+By default, \fBxwinpp\fR processes X window ids in order of input\. To specify the position of active window in the output use this option together with \fB\-p\fR\.
+.
+.TP
+\fB\-aw\fR, \fB\-active\-win\fR \fIXID\fR
+By default, \fBxwinpp\fR uses \fI_NET_ACTIVE_WINDOW\fR to find the active window out\. To specify another window you can use this option\.
+.
+.TP
+\fB\-s\fR, \fB\-select\fR
+Tell \fBxwinpp\fR to select and filter the input\. You need to specify the selection by using at least one of: \fB\-D\fR, \fB\-S\fR, \fB\-b\fR, \fB\-B\fR
+.
+.TP
+\fB\-D\fR, \fB\-desk\fR \fIDESK\fR\.\.\.
+Select windows, which are on \fIDESK\fR\. By default, windows on current desktop are used\.
+.
+.TP
+\fB\-S\fR, \fB\-tags\fR \fITAG\fR\.\.\.
+Select windows, which are tagged with \fITAG\fR\.
+.
+.TP
+\fB\-b\fR, \fB\-visible\fR
+Select windows, which are visible\. A window is visible, if \fI_NET_WM_STATE_HIDDEN\fR is not set\.
+.
+.TP
+\fB\-B\fR, \fB\-hidden\fR
+Select windows, which are hidden\. A window is hidden, if \fI_NET_WM_STATE_HIDDEN\fR is set\.
+.
+.TP
+\fB\-h\fR, \fB\-help\fR
+Display a short help\.
+.
+.TP
+\fB\-v\fR, \fB\-version\fR
+Print current version of \fBxwinpp\fR\.
+.
+.SH "SUBCOMMANDS"
+.
+.TP
+\fB\-p\fR, \fB\-print\fR
+Print a preparing output with variables\. You can specify the output with \fB\-s\fR and \fB\-P\fR\.
+.
+.TP
+\fB\-t\fR, \fB\-tag\fR \fB( set \fITAGSTRING\fR | unset )\fR
+Tag or untag windows from input\. You can specify widows with \fB\-s\fR\.
+.
+.TP
+\fB\-r\fR, \fB\-remove\fR \fIPROPERTY_NAME\fR
+Remove \fIPROPERTY_NAME\fR of windows from input\. You can specify windows with \fB\-s\fR\.
+.
+.SH "ARGUMENTS"
+.
+.TP
+\fIFILE\fR
+File may be a regular file or a named pipe\.
+.
+.TP
+\fIDESK\fR
+Desktop number specified by an integer or \fBcurr\fR\. To declare more than one desktop, separate it with a space character\. Example: \fB0 1 2\fR; \fBcurr\fR is not allowed then\.
+.
+.TP
+\fIPOS\fR
+Position of the active window in the output specified by an integer\. You may also write \fBstart\fR or \fBend\fR\. Position starts with \fB1\fR\.
+.
+.TP
+\fIPROPERTY_NAME\fR
+Name of window and font property in an X server\.
+.
+.TP
+\fITAGSTRING\fR
+You have to set all strings in \fI_XWINPP_TAGS\fR property at the same time\. To set a string with more than one tag, seperate it with a colon\. Example: \fBgui:viewer:pdf\fR\.
+.
+.TP
+\fITAG\fR
+Tag, which was specified as \fI_XWINPP_TAGS\fR property in an X server\. To select more than one tag, seperate it with a colon\. Example: \fBgui:pdf\fR\.
+.
+.TP
+\fIXID\fR
+Numeric window identity\.
+.
+.SH "EXAMPLES"
+.
+.TP
+To print a preparing output:
+wmctrl \-l | xwinpp \- \-p
+.br
+wmctrl \-lx | grep xterm | xwinpp \- \-p
+.br
+xwinpp \- \-p < <(wmctrl \-l)
+.br
+xwinpp \-F /tmp/xids \-p
+.br
+xwinpp \-F <(wmctrl \-l) \-p
+.br
+wmctrl \-l | WIN_ACTIVE=0x3000022 xwinpp \- \-p
+.br
+wmctrl \-l | xwinpp \- \-aw 0x3000022 \-p
+.
+.TP
+To print a preparing output, but filter before:
+wmctrl \-l | xwinpp \- \-s \-b \-p
+.br
+wmctrl \-l | xwinpp \- \-s \-D 1 \-p
+.br
+wmctrl \-l | xwinpp \- \-s \-b \-D \'0 1\' \-p
+.br
+wmctrl \-l | xwinpp \- \-s \-B \-D \'1 0\' \-p
+.br
+wmctrl \-l | xwinpp \- \-s \-S gui:pdf \-p
+.
+.TP
+To print a preparing output and reorder active win:
+wmctrl \-l | xwinpp \- \-P end \-p
+.br
+wmctrl \-l | xwinpp \- \-P 1 \-p
+.
+.TP
+To tag or untag windows with \fI_XWINPP_TAGS\fR property:
+wmctrl \-l | xwinpp \- \-t set office:audio:video
+.br
+wmctrl \-l | xwinpp \- \-s \-D 0 \-t set gui:viewer:pdf
+.br
+wmctrl \-l | xwinpp \- \-s \-B \-t unset
+.
+.TP
+To remove window or font property:
+wmctrl \-l | xwinpp \- \-r WM_NORMAL_HINTS
+.
+.SH "RETURN VALUES"
+.
+.TP
+1
+USAGE: xwinpp (\-|\-F|\-h|\-v) [\-s] [\-P] (\-p|\-r|\-t)
+.
+.TP
+2
+What is biting your current desktop?
+.
+.TP
+3
+Wrongly, \fBonly_visible\fR and \fBonly_hidden\fR are set to true\. Do not use \fB\-b\fR and \fB\-B\fR at the same time\.
+.
+.SH "NOTES"
+.
+.IP "\(bu" 4
+You can write all commands and options without masking \fB\-\fR\. So, instead of \fB\-help\fR you may use \fBhelp\fR\.
+.
+.IP "\(bu" 4
+You do not have to use \fBwmctrl\fR for fetching X window ids\. You can also use \fBxdotool\fR, \fBxlsclients\fR, \fBxwit\fR, \fBxwininfo\fR or \fBxprop\fR\. But ensure to get an input, which is separated by newline; window ids must be in the first field and separated from second field with space character (delimiter=space)\. See also: \fB<https://gist\.github\.com/D630/8913932>\fR and \fB<http://www\.ict\.griffith\.edu\.au/anthony/info/X/WindowID\.hints>\fR
+.
+.IP "\(bu" 4
+\fI_NET_WM_STATE_HIDDEN\fR means, that a window is iconified/minimized\.
+.
+.IP "" 0
+.
+.SH "ENVIROMENT"
+.
+.TP
+\fIWIN_ACTIVE\fR
+You may use this variable instead option \fB\-aw\fR\.
+.
+.SH "BUGS & REQUESTS"
+Report it on \fB<https://github\.com/D630/xwinpp>\fR
+.
+.SH "TODO"
+.
+.IP "\(bu" 4
+Provide a "professional" error handling\.
+.
+.IP "\(bu" 4
+Revise reading of X window list and introduce some options to specify, how list is constructed\.
+.
+.IP "\(bu" 4
+Revise tag mechanism\.
+.
+.IP "\(bu" 4
+Revise \fBsed\fR code and try to translate it into \fBbash\fR code\.
+.
+.IP "\(bu" 4
+Correct the English in this manpage\.
+.
+.IP "" 0
+.
+.SH "LICENSE"
+\fBxwinpp\fR is licensed with \fBGNU GPLv3\fR\. You should have received a copy of the \fBGNU General Public License\fR along with this program\. If not, see for more details \fB<http://www\.gnu\.org/licenses/gpl\-3\.0\.html>\fR
+.
+.SH "CHRONOLOGY"
+First version (\fB0\.1\.0\.0\fR) was finished on 8\. February 2014\.
+.
+.SH "SEE ALSO"
+\fBbash\fR(1), \fBsed\fR(1), \fBx\fR(7), \fBxprop\fR(1), \fBxwininfo\fR(1)
