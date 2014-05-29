@@ -164,7 +164,7 @@ NOTES
            But ensure to get an input, which is separated by newline;
            window ids must be in the first field and separated from
            second field with space character (delimiter=space). See
-           also: <https://gist.github.com/D630/8913932> and
+           also: <https://gist.github.com/D630/11346608> and
            <http://www.ict.griffith.edu.au/anthony/info/X/WindowID.hints>
 
        · _NET_WM_STATE_HIDDEN means, that a window is iconified/minimized.
