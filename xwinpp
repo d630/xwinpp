@@ -34,7 +34,7 @@
 
 # -- FUNCTIONS.
 
-__xwpp_version() { echo "0.1.0.4" ; }
+__xwpp_version() { echo "0.1.0.5" ; }
 
 __xwpp_usage() { echo "xwinpp (-|-F|-h|-v) [-s] [-P] (-p|-r|-t)" ; }
 
@@ -102,8 +102,8 @@ __xwpp_remove_prop()
 
 __xwpp_repositioning_win_active()
 {
-    [[ $win_active_position = end ]] && win_active_position=${#win_xid[@]}
-    [[ $win_active_position = start ]] && win_active_position=1
+    [[ $win_active_position == end ]] && win_active_position=${#win_xid[@]}
+    [[ $win_active_position == start ]] && win_active_position=1
 
     (( win_active_position-1 != win_active_index_nr )) &&
     {
@@ -178,7 +178,7 @@ win_tags=( ${win_tags[*]} )"
 
 __xwpp_tag_win()
 {
-    if [[ $unset = true ]]
+    if [[ $unset == true ]]
     then
         __xwpp_tag() { xprop -id "$xid" -remove _XWINPP_TAGS ; }
     else
@@ -229,15 +229,15 @@ __xwpp_read_win_list()
             win_active_tags=$win_tags_tmp
         }
 
-        if [[ $m = all ]]
+        if [[ $m == all ]]
         then
             __xwpp_build_arrays
         else
             read -r _ _ map_state < <(xprop -notype -id "${line%% *}" _NET_WM_STATE)
-            if [[ $m = vis && ! $map_state =~ _NET_WM_STATE_HIDDEN ]]
+            if [[ $m == vis && ! $map_state =~ _NET_WM_STATE_HIDDEN ]]
             then
                 __xwpp_build_arrays
-            elif [[ $m = hid && $map_state =~ _NET_WM_STATE_HIDDEN ]]
+            elif [[ $m == hid && $map_state =~ _NET_WM_STATE_HIDDEN ]]
             then
                 __xwpp_build_arrays
             fi
@@ -270,7 +270,7 @@ case ${1#-} in
             ;;
 esac
 
-[[ $1 = - ]] &&
+[[ $1 == - ]] &&
 {
     while read -r i
     do
@@ -335,7 +335,7 @@ do
     esac
 done
 
-[[ ${desk_select[0]} = curr || ! ${desk_select[*]} ]] && desk_select=( $desk_curr )
+[[ ${desk_select[0]} == curr || ! ${desk_select[*]} ]] && desk_select=( $desk_curr )
 
 if [[ $only_visible && $only_hidden ]]
 then
