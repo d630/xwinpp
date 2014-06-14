@@ -17,9 +17,24 @@
 # along with this program.  If not,
 # see <http://www.gnu.org/licenses/gpl-3.0.html>.
 
-# --- Functions
+# -- DEBUGGING.
 
-_version() { echo "0.1.0.2" ; }
+#printf '%s (%s)\n' "$BASH_VERSION" "${BASH_VERSINFO[5]}" && exit 0
+#set -o xtrace #; exec 2>> ~/xwinpp.log
+#set -o verbose
+#set -o noexec
+#set -o errexit
+#set -o nounset
+#set -o pipefail
+#trap '(read -p "[$BASH_SOURCE:$LINENO] $BASH_COMMAND?")' DEBUG
+
+# -- SETTINGS.
+
+#declare vars_base=$(set -o posix ; set)
+
+# -- FUNCTIONS.
+
+_version() { echo "0.1.0.3" ; }
 
 _usage() { echo "xwinpp (-|-F|-h|-v) [-s] [-P] (-p|-r|-t)" ; }
 
@@ -230,7 +245,7 @@ _read_win_list()
     done
 }
 
-# --- Main
+# -- MAIN.
 
 [[ ! $1 ]] && { printf '%s\n' "USAGE: $(_usage)" >&2 ; exit 1 ; }
 
