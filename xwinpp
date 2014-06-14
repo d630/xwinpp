@@ -31,12 +31,13 @@
 # -- SETTINGS.
 
 #declare vars_base=$(set -o posix ; set)
+shopt -s extglob
 
 # -- FUNCTIONS.
 
-__xwpp_version() { echo "0.1.0.5" ; }
+__xwpp_version() { echo "0.1.1.0" ; }
 
-__xwpp_usage() { echo "xwinpp (-|-F|-h|-v) [-s] [-P] (-p|-r|-t)" ; }
+__xwpp_usage() { echo "xwinpp -I (-B|-b) [-D|-P|-t|-V] (-h|-p|-S|-v)" ; }
 
 __xwpp_help()
 {
@@ -47,163 +48,117 @@ OPTIONS
 -------
     OPTION                  ARG
     ------                  ---
-    -
-    -F,  -file              <FILE>
-    -P,  -active-win-pos    <POS>
-    -aw, -active-win        <XID>
-    -s,  -select            Require: -b -B -D -S
-    -D,  -desk              <DESK>...
-    -S,  -tags              <TAG>...
-    -b,  -visible
-    -B,  -hidden
-    -h,  -help
-    -v,  -version
+    -B,  --hidden
+    -b,  --visible
+    -D,  --desk=            <DESK>...
+    -h,  --help
+    -I,  --input-file=      <FILE> or hyphen (-)
+    -P,  --win-active-pos=  <POS>
+    -t,  --tags=            <TTAG>...
+    -v,  --version
+    -V,  --win-active=      <XID>
 
 ACTIONS
 -------
     ACTION                  ARG
     ------                  ---
-    -p,  -print
-    -t,  -tag               ( set <TAGSTRING> | unset )
-    -r,  -remove            <PROPERTY_NAME>
+    -p,  --print
+    -S,  --set              <STAG>
 
 ARGUMENTS
 ---------
+    <DESK>                  'curr' or relative to the current desktop
+                            'next' or 'preview'. To specify a desktop
+                            number (starts at 0) use the prefix 'i:'; a
+                            desktop name is prefixed with 's:'.
+                            Examples: 'i:0'; 's:web'; ''s:some stuff''.
+                            To select more than one tag, seperate it with
+                            a comma like 'i:0,i:1,s:web'.
     <FILE>                  File may be a regular file or a named pipe.
-    <DESK>                  Desktop number specified by an integer or
-                            'curr'. To declare more than one desktop,
-                            separate it with a space character.
-                            Example: '0 1 2'; 'curr' is not allowed
-                            then.
     <POS>                   Position of the active window in the output
                             specified by an integer. You may also write
-                            'start' or 'end'. Position starts with '1'.
-    <PROPERTY_NAME>         Name of window and font property in an X
-                            server.
-    <TAGSTRING>             You have to set all strings in _XWINPP_TAGS
+                            'start' or 'end'. Position starts with '0'.
+    <STAG>                  You have to set all tags in <_XWINPP_TAGS>
                             property at the same time. To set a string
                             with more than one tag, seperate it with a
-                            colon. Example: 'gui:viewer:pdf'.
-    <TAG>                   Tag, which was specified as _XWINPP_TAGS
+                            comma and prefix it with 'tag:'. Example:
+                            'tag:gui,viewer,pdf'. To remove use only
+                            'tag:'.
+    <TTAG>                  Tag, which was specified as <_XWINPP_TAGS>
                             property in an X server. To select more than
-                            one tag, seperate it with a colon.
-                            Example: 'gui:pdf'.
+                            one tag, seperate it with a comma.
+                            Example: 'gui,pdf'.
     <XID>                   Numeric window identity.
 "
 }
 
-__xwpp_remove_prop()
-{
-    for xid in "${win_xid[@]}"
-    do
-        xprop -id "$xid" -remove "$property"
-    done
-}
-
-__xwpp_repositioning_win_active()
-{
-    [[ $win_active_position == end ]] && win_active_position=${#win_xid[@]}
-    [[ $win_active_position == start ]] && win_active_position=1
-
-    (( win_active_position-1 != win_active_index_nr )) &&
-    {
-        # Shortness ;)
-        i=$win_active_index_nr
-        unset win_xid[i] win_geo_x_y[i] win_geo_w_h[i] win_tags[i] win_frame_extents[i]
-
-        case $win_active_position in
-            1)
-                    win_xid=( $win_active ${win_xid[@]} )
-                    win_geo_x_y=( ${win_active_geo_x_y[@]} ${win_geo_x_y[@]} )
-                    win_geo_w_h=( ${win_active_geo_w_h[@]} ${win_geo_w_h[@]} )
-                    win_tags=( $win_active_tags ${win_tags[@]} )
-                    win_frame_extents=( $win_active_frame_extents ${win_frame_extents[@]} )
-                    ;;
-            ${#win_xid[@]})
-                    win_xid=( ${win_xid[@]} $win_active )
-                    win_geo_x_y=( ${win_geo_x_y[@]} ${win_active_geo_x_y[@]} )
-                    win_geo_w_h=( ${win_geo_w_h[@]} ${win_active_geo_w_h[@]} )
-                    win_tags=( ${win_tags[@]} $win_active_tags )
-                    win_frame_extents=( ${win_frame_extents[@]} $win_active_frame_extents )
-                    ;;
-            *)
-                    [[ ${win_xid[@]} ]] && mapfile -t win_xid < <(sed -re "$win_active_position i ${win_active/0x/0x0}" < <(printf '%s\n' "${win_xid[@]}"))
-                    [[ ${win_geo_x_y[@]} ]] && mapfile -t win_geo_x_y < <(sed -re "$win_active_position i ${win_active_geo_x_y[*]}" < <(printf '%s\n' "${win_geo_x_y[@]}"))
-                    [[ ${win_geo_w_h[@]} ]] && mapfile -t win_geo_w_h < <(sed -re "$win_active_position i ${win_active_geo_w_h[*]}" < <(printf '%s\n' "${win_geo_w_h[@]}"))
-                    [[ ${win_tags[@]} ]] && mapfile -t win_tags < <(sed -re "$win_active_position i ${win_active_tags}" < <(printf '%s\n' "${win_tags[@]}"))
-                    [[ ${win_frame_extents[@]} ]] && mapfile -t win_frame_extents < <(sed -re "$win_active_position i ${win_active_frame_extents}" < <(printf '%s\n' "${win_frame_extents[@]}"))
-                    ;;
-        esac
-    }
-}
-
 __xwpp_win_active()
 {
-    [[ $WIN_ACTIVE ]] && win_active=${WIN_ACTIVE/0x0/0x}
+    declare -g win_active=
 
-    [[ ! $win_active ]] &&
-    {
-        if (( ${desk_select[0]} != $desk_curr ))
+    if [[ $XWINPP_WIN_ACTIVE ]]
+    then
+        win_active=${WIN_ACTIVE/0x0/0x}
+    elif [[ ! $win_active ]]
+    then
+        if ((${desk_select[0]} != $desk_curr))
         then
             win_active=${win_xid[0]}
         else
             read -r _ _ _ _ win_active < <(xprop -root -notype _NET_ACTIVE_WINDOW)
         fi
-
         [[ ! $win_active ]] &&
         {
             win_active=
-            win_active_geo_w_h=()
-            win_active_geo_x_y=()
+            declare -ga \
+                        win_active_geo_w_h=() \
+                        win_active_geo_x_y=()
         }
-    }
-}
-
-__xwpp_print_win()
-{
-    printf '%s\n' "desk_curr=$desk_curr
-desk_select=( ${desk_select[*]} )
-win_active=$win_active
-win_active_geo_x_y=( ${win_active_geo_x_y[*]} )
-win_active_geo_w_h=( ${win_active_geo_w_h[*]} )
-win_active_frame_extents=$win_active_frame_extents
-win_active_tags=$win_active_tags
-win_xid=( ${win_xid[*]} )
-win_number=${#win_xid[@]}
-win_geo_x_y=( ${win_geo_x_y[*]} )
-win_geo_w_h=( ${win_geo_w_h[*]} )
-win_frame_extents=( ${win_frame_extents[*]} )
-win_tags=( ${win_tags[*]} )"
-}
-
-__xwpp_tag_win()
-{
-    if [[ $unset == true ]]
-    then
-        __xwpp_tag() { xprop -id "$xid" -remove _XWINPP_TAGS ; }
-    else
-        __xwpp_tag() { xprop -id "$xid" -format _XWINPP_TAGS 8u -set _XWINPP_TAGS "$ustring" ; }
     fi
-
-    for xid in "${win_xid[@]}"
-    do
-        __xwpp_tag
-    done
 }
-
-__xwpp_build_arrays() { eval "win_xid+=( ${line%% *} )" "win_geo_x_y+=( ${win_geo_x_y_tmp[@]} )" "win_geo_w_h+=( ${win_geo_w_h_tmp[@]} )" "win_tags+=( $win_tags_tmp )" "win_frame_extents+=( $win_frame_extents_tmp )" ; }
 
 __xwpp_read_win_list()
 {
+    declare \
+            line= \
+            skip= \
+            state= \
+            tag= \
+            win_desk= \
+            win_frame_extents_tmp= \
+            win_tags_tmp= \
+            xprop_win_tags=
+
+    declare -g \
+               win_active_index_nr= \
+               win_active_frame_extents= \
+               win_active_tags=
+
+    declare -a \
+               win_geo_w_h_tmp=() \
+               win_geo_x_y_tmp=() \
+               xwininfo_win_current=()
+
+    declare -ga \
+                win_active_geo_w_h=() \
+                win_active_geo_x_y=() \
+                win_frame_extents=() \
+                win_geo_w_h=() \
+                win_geo_x_y=() \
+                win_tags=() \
+                win_xid=()
+
+    __xwpp_build_arrays() { win_xid+=(${line%% *}) ; win_geo_x_y+=(${win_geo_x_y_tmp[@]}) ; win_geo_w_h+=(${win_geo_w_h_tmp[@]}) ; win_tags+=($win_tags_tmp) ; win_frame_extents+=($win_frame_extents_tmp) ; }
+
     for line in "${win_list[@]}"
     do
         read -r _ _ win_desk < <(xprop -notype -id "${line%% *}" _NET_WM_DESKTOP)
-        { [[ ! $win_desk =~ [[:digit:]]+ || ! ${desk_select[*]} =~ $win_desk ]] ; } && continue
+        { [[ ! $win_desk =~ [0-9]+ || ! ${desk_select[*]} =~ $win_desk ]] ; } && continue
 
-        [[ ${tags[*]} ]] &&
+        read -r _ _ xprop_win_tags < <(xprop -notype -id "${line%% *}" _XWINPP_TAGS)
+        { [[ $xprop_win_tags =~ found\. ]] && win_tags_tmp=null ; } || win_tags_tmp=${xprop_win_tags//\"/}
+        [[ ${tags[@]} ]] &&
         {
-            read -r _ _ xprop_win_tags < <(xprop -notype -id "${line%% *}" _XWINPP_TAGS)
-
             for tag in "${tags[@]}"
             do
                 [[ ! $xprop_win_tags =~ $tag ]] && skip=1
@@ -214,30 +169,30 @@ __xwpp_read_win_list()
 
         read -r _ _ win_frame_extents_tmp < <(xprop -notype -id "${line%% *}" _NET_FRAME_EXTENTS)
         win_frame_extents_tmp=${win_frame_extents_tmp// /}
-        [[ ! $win_frame_extents_tmp =~ [[:digit:]],+ ]] && win_frame_extents_tmp="null,null,null,null"
+        [[ ! $win_frame_extents_tmp =~ [0-9],+ ]] && win_frame_extents_tmp="null,null,null,null"
 
         mapfile -t xwininfo_win_current < <(xwininfo -id "${line%% *}")
-        win_geo_x_y_tmp=( $((${xwininfo_win_current[3]##* }+${xwininfo_win_current[5]##* })),$((${xwininfo_win_current[4]##* }+${xwininfo_win_current[6]##* })) )
-        win_geo_w_h_tmp=( ${xwininfo_win_current[7]##* },${xwininfo_win_current[8]##* } )
+        win_geo_x_y_tmp=($((${xwininfo_win_current[3]##* }+${xwininfo_win_current[5]##* })),$((${xwininfo_win_current[4]##* }+${xwininfo_win_current[6]##* })))
+        win_geo_w_h_tmp=(${xwininfo_win_current[7]##* },${xwininfo_win_current[8]##* })
 
-        [[ ${line%% *} = ${win_active/0x/0x0} || ${line%% *} = $win_active ]] &&
+        [[ ${line%% *} == ${win_active/0x/0x0} || ${line%% *} == $win_active ]] &&
         {
             win_active_frame_extents=$win_frame_extents_tmp
-            win_active_geo_x_y=( ${win_geo_x_y_tmp[*]} )
-            win_active_geo_w_h=( ${win_geo_w_h_tmp[*]} )
+            win_active_geo_x_y=(${win_geo_x_y_tmp[*]})
+            win_active_geo_w_h=(${win_geo_w_h_tmp[*]})
             win_active_index_nr=${#win_xid[@]}
             win_active_tags=$win_tags_tmp
         }
 
-        if [[ $m == all ]]
+        if [[ $map_state == all ]]
         then
             __xwpp_build_arrays
         else
-            read -r _ _ map_state < <(xprop -notype -id "${line%% *}" _NET_WM_STATE)
-            if [[ $m == vis && ! $map_state =~ _NET_WM_STATE_HIDDEN ]]
+            read -r _ _ state < <(xprop -notype -id "${line%% *}" _NET_WM_STATE)
+            if [[ $map_state == visible && ! $state =~ _NET_WM_STATE_HIDDEN ]]
             then
                 __xwpp_build_arrays
-            elif [[ $m == hid && $map_state =~ _NET_WM_STATE_HIDDEN ]]
+            elif [[ $map_state == hidden && $state =~ _NET_WM_STATE_HIDDEN ]]
             then
                 __xwpp_build_arrays
             fi
@@ -245,134 +200,289 @@ __xwpp_read_win_list()
     done
 }
 
-# -- MAIN.
-
-[[ ! $1 ]] && { printf '%s\n' "USAGE: $(_usage)" >&2 ; exit 1 ; }
-
-case ${1#-} in
-    h|help)
-            __xwpp_help
-            exit 0
-            ;;
-    v|version)
-            __xwpp_version
-            exit 0
-            ;;
-    F|file)
-            [[ -p $2 || -f $2 ]] &&
-            {
-                while read -r i
-                do
-                    win_list+=( "$i" )
-                done < "$2"
-                shift 2
-            }
-            ;;
-esac
-
-[[ $1 == - ]] &&
+__xwpp_repositioning_win_active()
 {
-    while read -r i
-    do
-        win_list+=( "$i" )
-    done
-    shift 1
+    [[ $win_active_position == end ]] && win_active_position=$((${#win_xid[@]}-1))
+    [[ $win_active_position == start ]] && win_active_position=0
+
+    ((win_active_position != win_active_index_nr)) &&
+    {
+        unset -v "win_xid[$win_active_index_nr]" "win_geo_x_y[$win_active_index_nr]" "win_geo_w_h[$win_active_index_nr]" "win_tags[$win_active_index_nr]" "win_frame_extents[$win_active_index_nr]"
+
+        case $win_active_position in
+            0)
+                    win_xid=($win_active ${win_xid[*]})
+                    win_geo_x_y=(${win_active_geo_x_y[*]} ${win_geo_x_y[*]})
+                    win_geo_w_h=(${win_active_geo_w_h[*]} ${win_geo_w_h[*]})
+                    win_tags=($win_active_tags ${win_tags[*]})
+                    win_frame_extents=($win_active_frame_extents ${win_frame_extents[*]})
+                    ;;
+            ${#win_xid[@]})
+                    win_xid=(${win_xid[*]} $win_active)
+                    win_geo_x_y=(${win_geo_x_y[*]} ${win_active_geo_x_y[*]})
+                    win_geo_w_h=(${win_geo_w_h[*]} ${win_active_geo_w_h[*]})
+                    win_tags=(${win_tags[*]} $win_active_tags)
+                    win_frame_extents=(${win_frame_extents[*]} $win_active_frame_extents)
+                    ;;
+            *)
+                    if (($win_active_position > ${#win_xid[@]}))
+                    then
+                        { printf '%s\n' "Index position ${win_active_position} is not suitable." >&2 ; exit 1 ; }
+                    else
+                        win_active_position=$(($win_active_position+1))
+                        [[ ${win_xid[@]} ]] && mapfile -t win_xid < <(sed -re "$win_active_position i ${win_active/0x/0x0}" < <(printf '%s\n' "${win_xid[@]}"))
+                        [[ ${win_geo_x_y[@]} ]] && mapfile -t win_geo_x_y < <(sed -re "$win_active_position i ${win_active_geo_x_y[*]}" < <(printf '%s\n' "${win_geo_x_y[@]}"))
+                        [[ ${win_geo_w_h[@]} ]] && mapfile -t win_geo_w_h < <(sed -re "$win_active_position i ${win_active_geo_w_h[*]}" < <(printf '%s\n' "${win_geo_w_h[@]}"))
+                        [[ ${win_tags[@]} ]] && mapfile -t win_tags < <(sed -re "$win_active_position i ${win_active_tags}" < <(printf '%s\n' "${win_tags[@]}"))
+                        [[ ${win_frame_extents[@]} ]] && mapfile -t win_frame_extents < <(sed -re "$win_active_position i ${win_active_frame_extents}" < <(printf '%s\n' "${win_frame_extents[@]}"))
+                    fi
+                    ;;
+        esac
+    }
 }
 
-read -r _ _ desk_curr < <(xprop -root -notype _NET_CURRENT_DESKTOP)
-[[ ! $desk_curr =~ [[:digit:]]+ ]] && { echo "2: What is biting your current desktop?" >&2 ; exit 2 ; }
+__xwpp_print_win()
+{
+    printf '%s\n' "desk_curr=$desk_curr
+desk_select=(${desk_select[*]})
+win_active=$win_active
+win_active_geo_x_y=(${win_active_geo_x_y[*]})
+win_active_geo_w_h=(${win_active_geo_w_h[*]})
+win_active_frame_extents=$win_active_frame_extents
+win_active_tags=$win_active_tags
+win_xid=(${win_xid[*]})
+win_number=${#win_xid[@]}
+win_geo_x_y=(${win_geo_x_y[*]})
+win_geo_w_h=(${win_geo_w_h[*]})
+win_frame_extents=(${win_frame_extents[*]})
+win_tags=(${win_tags[*]})"
+}
 
-while true
+__xwpp_set_win()
+{
+    declare xid=
+
+    if [[ ${sstring%%:*} == tag ]]
+    then
+        if [[ ! ${sstring#*:} ]]
+        then
+            __xwpp_set() { xprop -id "$xid" -remove _XWINPP_TAGS ; }
+        else
+            __xwpp_set() { xprop -id "$xid" -format _XWINPP_TAGS 8u -set _XWINPP_TAGS "${sstring#*:}" ; }
+        fi
+    else
+         { echo "Actually, you can only set tags." >&2 ; exit 1 ; }
+    fi
+
+    for xid in "${win_xid[@]}"
+    do
+        __xwpp_set
+    done
+}
+
+__xwpp_check_args()
+{
+    declare o=
+    if [[ ! $OPTARG =~ -.+ ]]
+    then
+        for o
+        do
+            declare -g "$o"
+        done
+    else
+        { printf '%s\n' "Option -${opt} requires an argument." >&2 ; exit 1 ; }
+    fi
+}
+
+__xwpp_check_args_array()
+{
+    declare o=
+    if [[ ! $OPTARG =~ -.+ ]]
+    then
+        for o
+        do
+            declare -ga "$o"
+        done
+    else
+        { printf '%s\n' "Option -${opt} requires an argument." >&2 ; exit 1 ; }
+    fi
+}
+
+# -- MAIN.
+
+(($# == 0)) && { printf '%s\n' "USAGE: $(__xwpp_usage)" >&2 ; exit 1 ; }
+
+declare \
+        arg= \
+        args= \
+        delim=
+
+for arg
 do
-    case ${1#-} in
-        s|select)
-                shift 1
-                while true
-                do
-                    case ${1#-} in
-                        b|visible)
-                                only_visible=true
-                                m=vis
-                                shift 1
-                                continue
-                                ;;
-                        B|hidden)
-                                only_hidden=true
-                                m=hid
-                                shift 1
-                                continue
-                                ;;
-                        D|desk)
-                                [[ $2 =~ [[:digit:]]+ ]] && desk_select=( $2 )
-                                shift 2
-                                continue
-                                ;;
-                        S|tags)
-                                ustring=$2
-                                [[ $ustring ]] && tags=( ${ustring//:/ } )
-                                shift 2
-                                continue
-                                ;;
-                        aw|active-win)
-                                win_active=$2
-                                shift 2
-                                continue
-                                ;;
-                        *)
-                                break
-                                ;;
-                    esac
-                done
-                ;;
-        P|active-win-position)
-                win_active_position=$2
-                shift 2
-                continue
-                ;;
-        *)
-                break
-                ;;
+    arg=${arg#--}
+    case $arg in
+        win-active=*)      args="${args}-V ${arg#*=} "               ;;
+        win-active-pos=*)  args="${args}-P ${arg#*=} "               ;;
+        "")                args="${args}-- "                         ;;
+        desk=*)            args="${args}-D ${arg#*=} "               ;;
+        input-file=*)      args="${args}-I ${arg#*=} "               ;;
+        help)              args="${args}-h "                         ;;
+        hidden)            args="${args}-B "                         ;;
+        print)             args="${args}-p "                         ;;
+        set=*)             args="${args}-S ${arg#*=}"                ;;
+        tags=*)            args="${args}-t ${arg#*=} "               ;;
+        version)           args="${args}-v "                         ;;
+        visible)           args="${args}-b "                         ;;
+        *)                 [[ ${arg:0:1} != - ]] && delim=\"
+                           args="${args}${arg} "
+                           delim=                                    ;;
     esac
 done
 
-[[ ${desk_select[0]} == curr || ! ${desk_select[*]} ]] && desk_select=( $desk_curr )
+declare \
+        action= \
+        desk_curr= \
+        desk_number= \
+        file_input= \
+        i= \
+        j= \
+        k= \
+        map_state= \
+        only_hidden= \
+        only_visible= \
+        opt= \
+        sstring= \
+        unset= \
+        ustring= \
+        win_active_position=
+
+declare -a \
+           desk_names=() \
+           desk_numbers=() \
+           desk_select=() \
+           tags=() \
+           win_list=()
+
+eval set -- $args
+
+while getopts :a:bBD:hI:pP:s:t:v opt
+do
+    case $opt in
+         V)  __xwpp_check_args "XWINPP_WIN_ACTIVE=$OPTARG"            ;;
+         B)  only_hidden=only_hidden ; map_state=hidden               ;;
+         b)  only_visible=only_visible ; map_state=visible            ;;
+         D)  __xwpp_check_args_array "desk_select+=(${OPTARG//,/ })"  ;;
+         h)  action=help                                              ;;
+         I)  __xwpp_check_args "XWINPP_INPUT_FILE=$OPTARG"            ;;
+         p)  action=print                                             ;;
+         P)  __xwpp_check_args "win_active_position=$OPTARG"          ;;
+         S)  __xwpp_check_args "sstring=$OPTARG" && action=set        ;;
+         t)  __xwpp_check_args_array "tags+=(${OPTARG//,/ })"         ;;
+         v)  action=version                                           ;;
+        \?) printf '%s\n' "Unknown flag: -${OPTARG}." >&2 ; exit 1    ;;
+    esac
+done
+
+if [[ $XWINPP_INPUT_FILE ]]
+then
+    file_input=$XWINPP_INPUT_FILE
+    if [[ $file_input == - ]]
+    then
+        if [[ -p /dev/stdin ]]
+        then
+            while read -r
+            do
+                win_list+=("$REPLY")
+            done
+        else
+            { echo "Stdin is not coming from a pipe." >&2 ; exit 1 ; }
+        fi
+    else
+        if [[ -p $file_input || -f $file_input ]]
+        then
+            while read -r
+            do
+                win_list+=("$REPLY")
+            done < "$file_input"
+        else
+            { echo "File does not exist or is neather a regular file nor a named pipe." >&2 ; exit 1 ; }
+        fi
+    fi
+elif [[ $action =~ (help|version) ]]
+then
+    :
+else
+    { echo "Input file is not set." >&2 ; exit 1 ; }
+fi
+
+read -r _ _ desk_curr < <(xprop -root -notype _NET_CURRENT_DESKTOP)
+[[ ! $desk_curr =~ [0-9]+ ]] && { echo "What is biting your current desktop?" >&2 ; exit 1 ; }
+if ((${#desk_select[@]} > 0))
+then
+    read -r _ _ desk_number < <(xprop -root -notype _NET_NUMBER_OF_DESKTOPS)
+    for ((i=0 ; i <= $desk_number-1 ; i++))
+    do
+        desk_numbers+=($i)
+    done
+    for j in ${!desk_select[@]}
+    do
+        case ${desk_select[$j]} in
+            curr)
+                    desk_select[$j]=$desk_curr
+                    ;;
+            next)
+                    desk_select[$j]=${desk_numbers[${desk_curr}+1]:-${desk_numbers[0]}}
+                    ;;
+            preview)
+                    desk_select[$j]=${desk_numbers[${desk_curr}-1]:-${desk_numbers[-1]}}
+                    ;;
+            i:+([0-9]))
+                    desk_select[$j]=${desk_select[$j]#*:}
+                    ;;
+            s:!([0-9]))
+                    read -r -a desk_names < <(xprop -root -notype _NET_DESKTOP_NAMES)
+                    desk_names=(${desk_names[@]:2})
+                    desk_names=(${desk_names[@]//\",/\"})
+                    for k in "${!desk_names[@]}"
+                    do
+                        [[ ${desk_names[$k]} == \"${desk_select[$j]#*:}\" ]] && desk_select[$j]=${desk_numbers[$k]}
+                    done
+                    ;;
+            *)
+                    { echo "Unknown argument for -D." >&2 ; exit 1 ; }
+                    ;;
+        esac
+    done
+else
+    desk_select=($desk_curr)
+fi
 
 if [[ $only_visible && $only_hidden ]]
 then
-    { echo "3: Wrongly, only_visible and only_hidden are set to true. Do not use -b and -B at the same time." >&2 ; exit 3 ; }
+    { echo "Wrongly, only_visible and only_hidden are set to true. Do not use -b and -B at the same time." >&2 ; exit 1 ; }
 elif [[ ! $only_visible && ! $only_hidden ]]
 then
-    m=all
+    map_state=all
 fi
 
-case ${1#-} in
-    p|print)
-            shift 1
+case $action in
+    help)
+            __xwpp_help
+            ;;
+    print)
             __xwpp_win_active
             __xwpp_read_win_list
             [[ $win_active_position ]] && __xwpp_repositioning_win_active
             __xwpp_print_win
             ;;
-    t|tag)
-            case ${2#-} in
-                set)
-                        ustring=$3
-                        shift 3
-                        ;;
-                unset)
-                        unset=true
-                        shift 2
-                        ;;
-            esac
+    set)
             __xwpp_win_active
             __xwpp_read_win_list
-            __xwpp_tag_win
+            __xwpp_set_win
             ;;
-    r|remove)
-            property=$2
-            shift 2
-            __xwpp_win_active
-            __xwpp_read_win_list
-            __xwpp_remove_prop
+    version)
+            __xwpp_version
             ;;
 esac
+
+exit 0
