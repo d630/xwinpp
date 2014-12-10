@@ -21,13 +21,13 @@ builtin shopt -s extglob
 
 # -- FUNCTIONS.
 
-__xwinpp_version() { echo "0.1.2.3" ; }
+__xwinpp_version() { builtin echo "0.1.2.4" ; }
 
-__xwinpp_usage() { echo "xwinpp -I (-B|-b) [-D|-P|-t|-V] (-h|-p|-S|-v)" ; }
+__xwinpp_usage() { builtin echo "xwinpp -I (-B|-b) [-D|-P|-t|-V] (-h|-p|-S|-v)" ; }
 
 __xwinpp_help()
 {
-     printf "
+     builtin printf "
 $(__xwinpp_usage)
 
 OPTIONS
