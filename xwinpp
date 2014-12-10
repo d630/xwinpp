@@ -412,7 +412,7 @@ __xwinpp_main()
 
     if ((${#desk_select[@]} > 0))
     then
-        for ((i=0 ; i <= $desk_number-1 ; i++))
+        for ((i=0 ; i < $desk_number ; i++))
         do
             desk_numbers+=($i)
         done
