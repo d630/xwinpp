@@ -21,7 +21,7 @@ builtin shopt -s extglob
 
 # -- FUNCTIONS.
 
-__xwinpp_version() { echo "0.1.1.1" ; }
+__xwinpp_version() { echo "0.1.2.0" ; }
 
 __xwinpp_usage() { echo "xwinpp -I (-B|-b) [-D|-P|-t|-V] (-h|-p|-S|-v)" ; }
 
@@ -53,12 +53,12 @@ ACTIONS
 
 ARGUMENTS
 ---------
-    <DESK>                  'curr' or relative to the current desktop
-                            'next' or 'preview'. To specify a desktop
-                            number (starts at 0) use the prefix 'i:'; a
+    <DESK>                  'any', 'curr' or relative to the current
+                            desktop 'next' or 'prev'. Specify a desktop
+                            number (starts at 0) with the prefix 'i:'; a
                             desktop name is prefixed with 's:'.
                             Examples: 'i:0'; 's:web'; ''s:some stuff''.
-                            To select more than one tag, seperate it with
+                            To select more than one desk, seperate with
                             a comma like 'i:0,i:1,s:web'.
     <FILE>                  File may be a regular file or a named pipe.
     <POS>                   Position of the active window in the output
@@ -266,20 +266,6 @@ __xwinpp_set_win()
     done
 }
 
-__xwinpp_set_args()
-{
-    builtin declare o=
-    if [[ ! $OPTARG =~ ^-.+ ]]
-    then
-        for o
-        do
-            builtin declare -g "$o"
-        done
-    else
-        { builtin printf '%s\n' "Option '-${opt}' requires an argument" 1>&2 ; builtin exit 1 ; }
-    fi
-}
-
 __xwinpp_main()
 {
 
@@ -327,6 +313,14 @@ __xwinpp_main()
     builtin declare -a \
        desk_select="()" \
        tags="()" \
+
+    function __xwinpp_set_args
+    if [[ ! $OPTARG =~ ^-.+ ]]
+    then
+        builtin eval "$1"
+    else
+        { builtin printf '%s\n' "Option '-${opt}' requires an argument" 1>&2 ; builtin exit 1 ; }
+    fi
 
     builtin eval builtin set -- "$args"
     while builtin getopts :a:bBD:hI:pP:s:t:v opt
@@ -425,13 +419,16 @@ __xwinpp_main()
         for j in ${!desk_select[@]}
         do
             case ${desk_select[$j]} in
+                any)
+                        desk_select=(${desk_numbers[@]})
+                        ;;
                 curr)
                         desk_select[$j]=$desk_curr
                         ;;
                 next)
                         desk_select[$j]=${desk_numbers[$desk_curr+1]:-${desk_numbers[0]}}
                         ;;
-                preview)
+                prev)
                         desk_select[$j]=${desk_numbers[$desk_curr-1]:-${desk_numbers[-1]}}
                         ;;
                 i:+([0-9]))
