@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-# Copyright 2014 D630
+# xwinpp
+# Copyright 2014 D630, GNU GPLv3
 # https://github.com/D630/xwinpp
 
 # -- DEBUGGING.
