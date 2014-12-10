@@ -3,20 +3,6 @@
 # Copyright 2014 D630
 # https://github.com/D630/xwinpp
 
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not,
-# see <http://www.gnu.org/licenses/gpl-3.0.html>.
-
 # -- DEBUGGING.
 
 #printf '%s (%s)\n' "$BASH_VERSION" "${BASH_VERSINFO[5]}" && exit 0
@@ -31,18 +17,18 @@
 # -- SETTINGS.
 
 #declare vars_base=$(set -o posix ; set)
-shopt -s extglob
+builtin shopt -s extglob
 
 # -- FUNCTIONS.
 
-__xwpp_version() { echo "0.1.1.0" ; }
+__xwinpp_version() { echo "0.1.1.1" ; }
 
-__xwpp_usage() { echo "xwinpp -I (-B|-b) [-D|-P|-t|-V] (-h|-p|-S|-v)" ; }
+__xwinpp_usage() { echo "xwinpp -I (-B|-b) [-D|-P|-t|-V] (-h|-p|-S|-v)" ; }
 
-__xwpp_help()
+__xwinpp_help()
 {
      printf "
-$(__xwpp_usage)
+$(__xwinpp_usage)
 
 OPTIONS
 -------
@@ -92,7 +78,7 @@ ARGUMENTS
 "
 }
 
-__xwpp_win_active()
+__xwinpp_win_active()
 {
     declare -g win_active=
 
@@ -117,7 +103,7 @@ __xwpp_win_active()
     fi
 }
 
-__xwpp_read_win_list()
+__xwinpp_read_win_list()
 {
     declare \
             line= \
@@ -148,7 +134,7 @@ __xwpp_read_win_list()
                 win_tags=() \
                 win_xid=()
 
-    __xwpp_build_arrays() { win_xid+=(${line%% *}) ; win_geo_x_y+=(${win_geo_x_y_tmp[@]}) ; win_geo_w_h+=(${win_geo_w_h_tmp[@]}) ; win_tags+=($win_tags_tmp) ; win_frame_extents+=($win_frame_extents_tmp) ; }
+    __xwinpp_build_arrays() { win_xid+=(${line%% *}) ; win_geo_x_y+=(${win_geo_x_y_tmp[@]}) ; win_geo_w_h+=(${win_geo_w_h_tmp[@]}) ; win_tags+=($win_tags_tmp) ; win_frame_extents+=($win_frame_extents_tmp) ; }
 
     for line in "${win_list[@]}"
     do
@@ -186,21 +172,21 @@ __xwpp_read_win_list()
 
         if [[ $map_state == all ]]
         then
-            __xwpp_build_arrays
+            __xwinpp_build_arrays
         else
             read -r _ _ state < <(xprop -notype -id "${line%% *}" _NET_WM_STATE)
             if [[ $map_state == visible && ! $state =~ _NET_WM_STATE_HIDDEN ]]
             then
-                __xwpp_build_arrays
+                __xwinpp_build_arrays
             elif [[ $map_state == hidden && $state =~ _NET_WM_STATE_HIDDEN ]]
             then
-                __xwpp_build_arrays
+                __xwinpp_build_arrays
             fi
         fi
     done
 }
 
-__xwpp_repositioning_win_active()
+__xwinpp_repositioning_win_active()
 {
     [[ $win_active_position == end ]] && win_active_position=$((${#win_xid[@]}-1))
     [[ $win_active_position == start ]] && win_active_position=0
@@ -241,7 +227,7 @@ __xwpp_repositioning_win_active()
     }
 }
 
-__xwpp_print_win()
+__xwinpp_print_win()
 {
     printf '%s\n' "desk_curr=$desk_curr
 desk_select=(${desk_select[*]})
@@ -258,7 +244,7 @@ win_frame_extents=(${win_frame_extents[*]})
 win_tags=(${win_tags[*]})"
 }
 
-__xwpp_set_win()
+__xwinpp_set_win()
 {
     declare xid=
 
@@ -266,9 +252,9 @@ __xwpp_set_win()
     then
         if [[ ! ${sstring#*:} ]]
         then
-            __xwpp_set() { xprop -id "$xid" -remove _XWINPP_TAGS ; }
+            __xwinpp_set() { xprop -id "$xid" -remove _XWINPP_TAGS ; }
         else
-            __xwpp_set() { xprop -id "$xid" -format _XWINPP_TAGS 8u -set _XWINPP_TAGS "${sstring#*:}" ; }
+            __xwinpp_set() { xprop -id "$xid" -format _XWINPP_TAGS 8u -set _XWINPP_TAGS "${sstring#*:}" ; }
         fi
     else
          { echo "Actually, you can only set tags." >&2 ; exit 1 ; }
@@ -276,213 +262,219 @@ __xwpp_set_win()
 
     for xid in "${win_xid[@]}"
     do
-        __xwpp_set
+        __xwinpp_set
     done
 }
 
-__xwpp_check_args()
+__xwinpp_set_args()
 {
-    declare o=
-    if [[ ! $OPTARG =~ -.+ ]]
+    builtin declare o=
+    if [[ ! $OPTARG =~ ^-.+ ]]
     then
         for o
         do
-            declare -g "$o"
+            builtin declare -g "$o"
         done
     else
-        { printf '%s\n' "Option -${opt} requires an argument." >&2 ; exit 1 ; }
+        { builtin printf '%s\n' "Option '-${opt}' requires an argument" 1>&2 ; builtin exit 1 ; }
     fi
 }
 
-__xwpp_check_args_array()
+__xwinpp_main()
 {
-    declare o=
-    if [[ ! $OPTARG =~ -.+ ]]
-    then
-        for o
-        do
-            declare -ga "$o"
-        done
-    else
-        { printf '%s\n' "Option -${opt} requires an argument." >&2 ; exit 1 ; }
-    fi
-}
 
-# -- MAIN.
+    (($# == 0)) && \
+        { builtin printf '%s\n' "USAGE: $(__xwinpp_usage)" >&2 ; builtin exit 1 ; }
 
-(($# == 0)) && { printf '%s\n' "USAGE: $(__xwpp_usage)" >&2 ; exit 1 ; }
-
-declare \
+    builtin declare \
         arg= \
         args= \
-        delim=
+        delim=\'
 
-for arg
-do
-    arg=${arg#--}
-    case $arg in
-        win-active=*)      args="${args}-V ${arg#*=} "               ;;
-        win-active-pos=*)  args="${args}-P ${arg#*=} "               ;;
-        "")                args="${args}-- "                         ;;
-        desk=*)            args="${args}-D ${arg#*=} "               ;;
-        input-file=*)      args="${args}-I ${arg#*=} "               ;;
-        help)              args="${args}-h "                         ;;
-        hidden)            args="${args}-B "                         ;;
-        print)             args="${args}-p "                         ;;
-        set=*)             args="${args}-S ${arg#*=}"                ;;
-        tags=*)            args="${args}-t ${arg#*=} "               ;;
-        version)           args="${args}-v "                         ;;
-        visible)           args="${args}-b "                         ;;
-        *)                 [[ ${arg:0:1} != - ]] && delim=\"
-                           args="${args}${arg} "
-                           delim=                                    ;;
-    esac
-done
+    for arg
+    do
+        arg=${arg#--}
+        case $arg in
+            desk=?*)            args="${args}-D ${delim}${arg#*=}${delim} "  ;;
+            help)               args="${args}-h "                            ;;
+            hidden)             args="${args}-B "                            ;;
+            input-file=?*)      args="${args}-I ${delim}${arg#*=}${delim} "  ;;
+            print)              args="${args}-p "                            ;;
+            set=?*)             args="${args}-S ${delim}${arg#*=}${delim} "  ;;
+            tags=?*)            args="${args}-t ${delim}${arg#*=}${delim} "  ;;
+            version)            args="${args}-v "                            ;;
+            visible)            args="${args}-b "                            ;;
+            win-active-pos=?*)  args="${args}-P ${delim}${arg#*=}${delim} "  ;;
+            win-active=?*)      args="${args}-V ${delim}${arg#*=}${delim} "  ;;
+            *)                  if [[ ${arg:0:1} == - ]]
+                                then
+                                    args="${args}${arg} "
+                                else
+                                    args="${args}${delim}${arg}${delim} "
+                                fi
+        esac
+    done
 
-declare \
+    builtin declare \
         action= \
-        desk_curr= \
-        desk_number= \
-        file_input= \
-        i= \
-        j= \
-        k= \
         map_state= \
         only_hidden= \
         only_visible= \
         opt= \
         sstring= \
-        unset= \
-        ustring= \
         win_active_position=
 
-declare -a \
-           desk_names=() \
-           desk_numbers=() \
-           desk_select=() \
-           tags=() \
-           win_list=()
+    builtin declare -a \
+       desk_select="()" \
+       tags="()" \
 
-eval set -- $args
-
-while getopts :a:bBD:hI:pP:s:t:v opt
-do
-    case $opt in
-         V)  __xwpp_check_args "XWINPP_WIN_ACTIVE=$OPTARG"            ;;
-         B)  only_hidden=only_hidden ; map_state=hidden               ;;
-         b)  only_visible=only_visible ; map_state=visible            ;;
-         D)  __xwpp_check_args_array "desk_select+=(${OPTARG//,/ })"  ;;
-         h)  action=help                                              ;;
-         I)  __xwpp_check_args "XWINPP_INPUT_FILE=$OPTARG"            ;;
-         p)  action=print                                             ;;
-         P)  __xwpp_check_args "win_active_position=$OPTARG"          ;;
-         S)  __xwpp_check_args "sstring=$OPTARG" && action=set        ;;
-         t)  __xwpp_check_args_array "tags+=(${OPTARG//,/ })"         ;;
-         v)  action=version                                           ;;
-        \?) printf '%s\n' "Unknown flag: -${OPTARG}." >&2 ; exit 1    ;;
-    esac
-done
-
-if [[ $XWINPP_INPUT_FILE ]]
-then
-    file_input=$XWINPP_INPUT_FILE
-    if [[ $file_input == - ]]
-    then
-        if [[ -p /dev/stdin ]]
-        then
-            while read -r
-            do
-                win_list+=("$REPLY")
-            done
-        else
-            { echo "Stdin is not coming from a pipe." >&2 ; exit 1 ; }
-        fi
-    else
-        if [[ -p $file_input || -f $file_input ]]
-        then
-            while read -r
-            do
-                win_list+=("$REPLY")
-            done < "$file_input"
-        else
-            { echo "File does not exist or is neather a regular file nor a named pipe." >&2 ; exit 1 ; }
-        fi
-    fi
-elif [[ $action =~ (help|version) ]]
-then
-    :
-else
-    { echo "Input file is not set." >&2 ; exit 1 ; }
-fi
-
-read -r _ _ desk_curr < <(xprop -root -notype _NET_CURRENT_DESKTOP)
-[[ ! $desk_curr =~ [0-9]+ ]] && { echo "What is biting your current desktop?" >&2 ; exit 1 ; }
-if ((${#desk_select[@]} > 0))
-then
-    read -r _ _ desk_number < <(xprop -root -notype _NET_NUMBER_OF_DESKTOPS)
-    for ((i=0 ; i <= $desk_number-1 ; i++))
+    builtin eval builtin set -- "$args"
+    while builtin getopts :a:bBD:hI:pP:s:t:v opt
     do
-        desk_numbers+=($i)
-    done
-    for j in ${!desk_select[@]}
-    do
-        case ${desk_select[$j]} in
-            curr)
-                    desk_select[$j]=$desk_curr
-                    ;;
-            next)
-                    desk_select[$j]=${desk_numbers[${desk_curr}+1]:-${desk_numbers[0]}}
-                    ;;
-            preview)
-                    desk_select[$j]=${desk_numbers[${desk_curr}-1]:-${desk_numbers[-1]}}
-                    ;;
-            i:+([0-9]))
-                    desk_select[$j]=${desk_select[$j]#*:}
-                    ;;
-            s:!([0-9]))
-                    read -r -a desk_names < <(xprop -root -notype _NET_DESKTOP_NAMES)
-                    desk_names=(${desk_names[@]:2})
-                    desk_names=(${desk_names[@]//\",/\"})
-                    for k in "${!desk_names[@]}"
-                    do
-                        [[ ${desk_names[$k]} == \"${desk_select[$j]#*:}\" ]] && desk_select[$j]=${desk_numbers[$k]}
-                    done
-                    ;;
-            *)
-                    { echo "Unknown argument for -D." >&2 ; exit 1 ; }
-                    ;;
+        case $opt in
+            B)  only_hidden=only_hidden ; map_state=hidden          ;;
+            D)  __xwinpp_set_args "desk_select+=(${OPTARG//,/ })"   ;;
+            I)  __xwinpp_set_args "XWINPP_INPUT_FILE=$OPTARG"       ;;
+            P)  __xwinpp_set_args "win_active_position=$OPTARG"     ;;
+            S)  __xwinpp_set_args "sstring=$OPTARG" && action=set   ;;
+            V)  __xwinpp_set_args "XWINPP_WIN_ACTIVE=$OPTARG"       ;;
+            b)  only_visible=only_visible ; map_state=visible       ;;
+            h)  __xwinpp_help ; builtin exit 0                      ;;
+            p)  action=print                                        ;;
+            t)  __xwinpp_set_args "tags+=(${OPTARG//,/ })"          ;;
+            v)  __xwinpp_version ; builtin exit 0                   ;;
+            :)  builtin printf '%s\n' "Option '-${OPTARG}' requires an argument" 1>&2
+                builtin exit 1                                      ;;
+            \?) builtin printf '%s\n' "Unknown flag: '-${OPTARG}'" 1>&2
+                builtin exit 1
         esac
     done
-else
-    desk_select=($desk_curr)
-fi
 
-if [[ $only_visible && $only_hidden ]]
-then
-    { echo "Wrongly, only_visible and only_hidden are set to true. Do not use -b and -B at the same time." >&2 ; exit 1 ; }
-elif [[ ! $only_visible && ! $only_hidden ]]
-then
-    map_state=all
-fi
+    builtin declare file_input=
+    builtin declare -a win_list="()"
 
-case $action in
-    help)
-            __xwpp_help
-            ;;
-    print)
-            __xwpp_win_active
-            __xwpp_read_win_list
-            [[ $win_active_position ]] && __xwpp_repositioning_win_active
-            __xwpp_print_win
-            ;;
-    set)
-            __xwpp_win_active
-            __xwpp_read_win_list
-            __xwpp_set_win
-            ;;
-    version)
-            __xwpp_version
-            ;;
-esac
+    if [[ $XWINPP_INPUT_FILE ]]
+    then
+        file_input=$XWINPP_INPUT_FILE
+        if [[ $file_input == - ]]
+        then
+            if [[ -p /dev/stdin ]]
+            then
+                while builtin read -r
+                do
+                    win_list+=("$REPLY")
+                done
+            else
+                { builtin echo "Stdin is not coming from a pipe." >&2 ; builtin exit 1 ; }
+            fi
+        else
+            if [[ -p $file_input || -f $file_input ]]
+            then
+                while builtin read -r
+                do
+                    win_list+=("$REPLY")
+                done < "$file_input"
+            else
+                { builtin echo "File does not exist or is neather a regular file nor a named pipe." >&2 ; builtin exit 1 ; }
+            fi
+        fi
+    else
+        { builtin echo "Input file is not set." >&2 ; builtin exit 1 ; }
+    fi
 
-exit 0
+    builtin declare \
+        atome= \
+        desk_curr= \
+        desk_number= \
+        i= \
+        j= \
+        k= \
+        unset= \
+        ustring= \
+        val=
+
+    builtin declare -a \
+       desk_names="()" \
+       desk_numbers="()" \
+
+    while builtin read -r atome _ val
+    do
+        case $atome in
+            _NET_CURRENT_DESKTOP)
+                if [[ $val =~ [0-9]+ ]]
+                then
+                    desk_curr=$BASH_REMATCH
+                else
+                    { builtin echo "What is biting your current desktop?" >&2 ; builtin exit 1 ; }
+                fi
+                ;;
+            _NET_NUMBER_OF_DESKTOPS)
+                desk_number=$val
+                ;;
+            _NET_DESKTOP_NAMES)
+                desk_names=($val)
+        esac
+    done < <(command xprop -root -notype _NET_CURRENT_DESKTOP _NET_NUMBER_OF_DESKTOPS _NET_DESKTOP_NAMES)
+
+    if ((${#desk_select[@]} > 0))
+    then
+        for ((i=0 ; i <= $desk_number-1 ; i++))
+        do
+            desk_numbers+=($i)
+        done
+        for j in ${!desk_select[@]}
+        do
+            case ${desk_select[$j]} in
+                curr)
+                        desk_select[$j]=$desk_curr
+                        ;;
+                next)
+                        desk_select[$j]=${desk_numbers[$desk_curr+1]:-${desk_numbers[0]}}
+                        ;;
+                preview)
+                        desk_select[$j]=${desk_numbers[$desk_curr-1]:-${desk_numbers[-1]}}
+                        ;;
+                i:+([0-9]))
+                        desk_select[$j]=${desk_select[$j]#*:}
+                        ;;
+                s:?*)
+                        desk_names=(${desk_names[@]//\",/\"})
+                        for k in "${!desk_names[@]}"
+                        do
+                            [[ ${desk_names[$k]} == \"${desk_select[$j]#*:}\" ]] && \
+                            desk_select[$j]=${desk_numbers[$k]}
+                        done
+                        ;;
+                *)
+                        { builtin echo "Unknown argument for -D." >&2 ; builtin exit 1 ; }
+            esac
+        done
+    else
+        desk_select=($desk_curr)
+    fi
+
+    if [[ $only_visible && $only_hidden ]]
+    then
+        { builtin echo "Wrongly, only_visible and only_hidden are set to true. Do not use -b and -B at the same time." >&2 ; builtin exit 1 ; }
+    elif [[ ! $only_visible && ! $only_hidden ]]
+    then
+        map_state=all
+    fi
+
+    case $action in
+        print)
+                __xwinpp_win_active
+                __xwinpp_read_win_list
+                [[ $win_active_position ]] && __xwinpp_repositioning_win_active
+                __xwinpp_print_win
+                ;;
+        set)
+                __xwinpp_win_active
+                __xwinpp_read_win_list
+                __xwinpp_set_win
+    esac
+}
+
+# -- MAIN.
+
+__xwinpp_main "$@"
