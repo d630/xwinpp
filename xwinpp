@@ -21,7 +21,7 @@ builtin shopt -s extglob
 
 # -- FUNCTIONS.
 
-__xwinpp_version() { echo "0.1.2.2" ; }
+__xwinpp_version() { echo "0.1.2.3" ; }
 
 __xwinpp_usage() { echo "xwinpp -I (-B|-b) [-D|-P|-t|-V] (-h|-p|-S|-v)" ; }
 
@@ -103,7 +103,7 @@ do
         _NET_WM_DESKTOP)
             win_desk=$val
             ;;
-        _XWINPP_TAGS:)
+        _XWINPP_TAGS*)
             xprop_win_tags=$val
             ;;
         _NET_FRAME_EXTENTS)
@@ -223,40 +223,40 @@ __xwinpp_set_position_win_active()
 
         case $win_active_position in
             0)
-                    win_xid=($win_active ${win_xid[*]})
-                    win_geo_x_y=(${win_active_geo_x_y[*]} ${win_geo_x_y[*]})
-                    win_geo_w_h=(${win_active_geo_w_h[*]} ${win_geo_w_h[*]})
-                    win_tags=($win_active_tags ${win_tags[*]})
-                    win_frame_extents=($win_active_frame_extents ${win_frame_extents[*]})
-                    ;;
+                win_xid=($win_active ${win_xid[*]})
+                win_geo_x_y=(${win_active_geo_x_y[*]} ${win_geo_x_y[*]})
+                win_geo_w_h=(${win_active_geo_w_h[*]} ${win_geo_w_h[*]})
+                win_tags=($win_active_tags ${win_tags[*]})
+                win_frame_extents=($win_active_frame_extents ${win_frame_extents[*]})
+                ;;
             ${#win_xid[@]})
-                    win_xid=(${win_xid[*]} $win_active)
-                    win_geo_x_y=(${win_geo_x_y[*]} ${win_active_geo_x_y[*]})
-                    win_geo_w_h=(${win_geo_w_h[*]} ${win_active_geo_w_h[*]})
-                    win_tags=(${win_tags[*]} $win_active_tags)
-                    win_frame_extents=(${win_frame_extents[*]} $win_active_frame_extents)
-                    ;;
+                win_xid=(${win_xid[*]} $win_active)
+                win_geo_x_y=(${win_geo_x_y[*]} ${win_active_geo_x_y[*]})
+                win_geo_w_h=(${win_geo_w_h[*]} ${win_active_geo_w_h[*]})
+                win_tags=(${win_tags[*]} $win_active_tags)
+                win_frame_extents=(${win_frame_extents[*]} $win_active_frame_extents)
+                ;;
             *)
-                    if (($win_active_position > ${#win_xid[@]}))
-                    then
-                        { builtin printf '%s\n' "Index position ${win_active_position} is not suitable." >&2 ; builtin exit 1 ; }
-                    else
-                        for ((i=${#win_xid[@]}-1 ; i >= $win_active_position ; i--))
-                        do
-                            win_xid[$i+1]=${win_xid[$i]}
-                            win_geo_x_y[$i+1]=${win_geo_x_y[$i]}
-                            win_geo_w_h[$i+1]=${win_geo_w_h[$i]}
-                            win_tags[$i+1]=${win_tags[$i]}
-                            win_frame_extents[$i+1]=${win_frame_extents[$i]}
-                            ((win_active_position == i)) && {
-                                win_xid[$i]=${win_active/0x/0x0}
-                                win_geo_x_y[$i]=$(builtin printf '%s\n' "${win_active_geo_x_y[*]}")
-                                win_geo_w_h[$i]=$(builtin printf '%s\n' "${win_active_geo_w_h[*]}")
-                                win_tags[$i]=$win_active_tags
-                                win_frame_extents[$i]=$win_active_frame_extents
-                            }
-                        done
-                    fi
+                if (($win_active_position > ${#win_xid[@]}))
+                then
+                    { builtin printf '%s\n' "Index position ${win_active_position} is not suitable." >&2 ; builtin exit 1 ; }
+                else
+                    for ((i=${#win_xid[@]}-1 ; i >= $win_active_position ; i--))
+                    do
+                        win_xid[$i+1]=${win_xid[$i]}
+                        win_geo_x_y[$i+1]=${win_geo_x_y[$i]}
+                        win_geo_w_h[$i+1]=${win_geo_w_h[$i]}
+                        win_tags[$i+1]=${win_tags[$i]}
+                        win_frame_extents[$i+1]=${win_frame_extents[$i]}
+                        ((win_active_position == i)) && {
+                            win_xid[$i]=${win_active/0x/0x0}
+                            win_geo_x_y[$i]=$(builtin printf '%s\n' "${win_active_geo_x_y[*]}")
+                            win_geo_w_h[$i]=$(builtin printf '%s\n' "${win_active_geo_w_h[*]}")
+                            win_tags[$i]=$win_active_tags
+                            win_frame_extents[$i]=$win_active_frame_extents
+                        }
+                    done
+                fi
         esac
     }
 }
@@ -278,20 +278,20 @@ win_frame_extents=(${win_frame_extents[*]})
 win_tags=(${win_tags[*]})"
 }
 
-__xwinpp_set_win()
+__xwinpp_tag()
 {
-    declare xid=
+    builtin declare xid=
 
     if [[ ${sstring%%:*} == tag ]]
     then
-        if [[ ! ${sstring#*:} ]]
+        if [[ -z ${sstring#*:} ]]
         then
-            __xwinpp_set() { xprop -id "$xid" -remove _XWINPP_TAGS ; }
+            __xwinpp_set() { command xprop -id "$xid" -remove _XWINPP_TAGS ; }
         else
-            __xwinpp_set() { xprop -id "$xid" -format _XWINPP_TAGS 8u -set _XWINPP_TAGS "${sstring#*:}" ; }
+            __xwinpp_set() { command xprop -id "$xid" -format _XWINPP_TAGS 8u -set _XWINPP_TAGS "${sstring#*:}" ; }
         fi
     else
-         { echo "Actually, you can only set tags." >&2 ; exit 1 ; }
+         { builtin echo "Actually, you may only set tags." >&2 ; builtin exit 1 ; }
     fi
 
     for xid in "${win_xid[@]}"
@@ -357,7 +357,7 @@ __xwinpp_main()
     fi
 
     builtin eval builtin set -- "$args"
-    while builtin getopts :a:bBD:hI:pP:s:t:v opt
+    while builtin getopts :bBD:hI:pP:S:t:V:v opt
     do
         case $opt in
             B)  only_hidden=only_hidden ; map_state=hidden          ;;
@@ -438,30 +438,30 @@ __xwinpp_main()
         do
             case ${desk_select[$j]} in
                 any)
-                        desk_select=(${desk_numbers[@]})
-                        ;;
+                    desk_select=(${desk_numbers[@]})
+                    ;;
                 curr)
-                        desk_select[$j]=$desk_curr
-                        ;;
+                    desk_select[$j]=$desk_curr
+                    ;;
                 next)
-                        desk_select[$j]=${desk_numbers[$desk_curr+1]:-${desk_numbers[0]}}
-                        ;;
+                    desk_select[$j]=${desk_numbers[$desk_curr+1]:-${desk_numbers[0]}}
+                    ;;
                 prev)
-                        desk_select[$j]=${desk_numbers[$desk_curr-1]:-${desk_numbers[-1]}}
-                        ;;
+                    desk_select[$j]=${desk_numbers[$desk_curr-1]:-${desk_numbers[-1]}}
+                    ;;
                 i:+([0-9]))
-                        desk_select[$j]=${desk_select[$j]#*:}
-                        ;;
+                    desk_select[$j]=${desk_select[$j]#*:}
+                    ;;
                 s:?*)
-                        desk_names=(${desk_names[@]//\",/\"})
-                        for k in "${!desk_names[@]}"
-                        do
-                            [[ ${desk_names[$k]} == \"${desk_select[$j]#*:}\" ]] && \
-                            desk_select[$j]=${desk_numbers[$k]}
-                        done
-                        ;;
+                    desk_names=(${desk_names[@]//\",/\"})
+                    for k in "${!desk_names[@]}"
+                    do
+                        [[ ${desk_names[$k]} == \"${desk_select[$j]#*:}\" ]] && \
+                        desk_select[$j]=${desk_numbers[$k]}
+                    done
+                    ;;
                 *)
-                        { builtin echo "Unknown argument for -D." >&2 ; builtin exit 1 ; }
+                    { builtin echo "Unknown argument for -D." >&2 ; builtin exit 1 ; }
             esac
         done
     else
@@ -498,11 +498,14 @@ __xwinpp_main()
 
     case $action in
         print)
-                [[ $win_active_position ]] && __xwinpp_set_position_win_active
-                __xwinpp_print_wins_list
-                ;;
+            [[ $win_active_position ]] && __xwinpp_set_position_win_active
+            __xwinpp_print_wins_list
+            ;;
         set)
-                __xwinpp_set_win
+            __xwinpp_tag
+            ;;
+        *)
+            { builtin printf '%s\n' "USAGE: $(__xwinpp_usage)" >&2 ; builtin exit 1 ; }
     esac
 }
 
