@@ -2,6 +2,7 @@
 - remove sed dependence
 - change option `-D`, new possible value `any`
 - revise code base
+- remove manpage
 
 ##### 0.1.1.0 Sat Jun 14 23:08:57 2014 +0200
 - `-select` and `-remove` are deprecated
