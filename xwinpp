@@ -21,7 +21,7 @@ builtin shopt -s extglob
 
 # -- FUNCTIONS.
 
-__xwinpp_version() { echo "0.1.2.0" ; }
+__xwinpp_version() { echo "0.1.2.1" ; }
 
 __xwinpp_usage() { echo "xwinpp -I (-B|-b) [-D|-P|-t|-V] (-h|-p|-S|-v)" ; }
 
@@ -76,31 +76,6 @@ ARGUMENTS
                             Example: 'gui,pdf'.
     <XID>                   Numeric window identity.
 "
-}
-
-__xwinpp_win_active()
-{
-    declare -g win_active=
-
-    if [[ $XWINPP_WIN_ACTIVE ]]
-    then
-        win_active=${WIN_ACTIVE/0x0/0x}
-    elif [[ ! $win_active ]]
-    then
-        if ((${desk_select[0]} != $desk_curr))
-        then
-            win_active=${win_xid[0]}
-        else
-            read -r _ _ _ _ win_active < <(xprop -root -notype _NET_ACTIVE_WINDOW)
-        fi
-        [[ ! $win_active ]] &&
-        {
-            win_active=
-            declare -ga \
-                        win_active_geo_w_h=() \
-                        win_active_geo_x_y=()
-        }
-    fi
 }
 
 __xwinpp_read_win_list()
@@ -385,7 +360,8 @@ __xwinpp_main()
         k= \
         unset= \
         ustring= \
-        val=
+        val= \
+        win_active=
 
     builtin declare -a \
        desk_names="()" \
@@ -407,8 +383,11 @@ __xwinpp_main()
                 ;;
             _NET_DESKTOP_NAMES)
                 desk_names=($val)
+                ;;
+            _NET_ACTIVE_WINDOW:)
+                win_active=$val
         esac
-    done < <(command xprop -root -notype _NET_CURRENT_DESKTOP _NET_NUMBER_OF_DESKTOPS _NET_DESKTOP_NAMES)
+    done < <(command xprop -root -notype _NET_CURRENT_DESKTOP _NET_NUMBER_OF_DESKTOPS _NET_DESKTOP_NAMES _NET_ACTIVE_WINDOW)
 
     if ((${#desk_select[@]} > 0))
     then
@@ -458,15 +437,31 @@ __xwinpp_main()
         map_state=all
     fi
 
+    if [[ $XWINPP_WIN_ACTIVE ]]
+    then
+        win_active=${XWINPP_WIN_ACTIVE/0x0/0x}
+    else
+        if ((${desk_select[0]} != desk_curr))
+        then
+            win_active=${win_xid[0]}
+        else
+            builtin read -r _ _ win_active <<< "$win_active"
+        fi
+        [[ -z $win_active ]] && {
+            win_active=
+            builtin declare -a \
+                win_active_geo_w_h="()" \
+                win_active_geo_x_y="()"
+        }
+    fi
+
     case $action in
         print)
-                __xwinpp_win_active
                 __xwinpp_read_win_list
                 [[ $win_active_position ]] && __xwinpp_repositioning_win_active
                 __xwinpp_print_win
                 ;;
         set)
-                __xwinpp_win_active
                 __xwinpp_read_win_list
                 __xwinpp_set_win
     esac
