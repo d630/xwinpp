@@ -1,21 +1,21 @@
-## xwinpp v0.1.2.4 [GNU GPLv3]
+## xwinpp v0.1.2.5 [GNU GPLv3]
 
 `xwinpp`(1) is a bash shell script, that takes a list of X window ids (of your EWMH/NetWM compatible X windo manager) and performs some actions on it. Mainly, `xwinpp`(1) was written to process a preparing output with variables on that list. A typical output looks like this:
 
 ```
-desk_curr=0
-desk_select=(0)
-win_active=0x1c0000d
-win_active_geo_x_y=(0,1)
-win_active_geo_w_h=(1400,1049)
-win_active_frame_extents=0,0,0,0
-win_active_tags=null
-win_xid=(0x1c0000d 0x2800003 0x180125c 0x1e00002)
-win_number=4
-win_geo_x_y=(0,1 0,1 0,1 0,1)
-win_geo_w_h=(1400,1049 1400,1049 1400,1049 1400,1049)
-win_frame_extents=(0,0,0,0 0,0,0,0 0,0,0,0 0,0,0,0)
-win_tags=(null null null null)
+_xwinpp_desk_curr=0
+_xwinpp_desk_select=(0)
+_xwinpp_win_active=0x380000d
+_xwinpp_win_active_geo_x_y=(0,1)
+_xwinpp_win_active_geo_w_h=(1400,1049)
+_xwinpp_win_active_frame_extents=0,0,0,0
+_xwinpp_win_active_tags=null
+_xwinpp_win_xid=(0x1a00003 0x2e0000d 0x360000d 0x380000d 0x3a0000d 0x1e00002 0x1606c0d)
+_xwinpp_win_number=7
+_xwinpp_win_geo_x_y=(0,1 700,210 700,419 0,1 700,628 0,1 0,1)
+_xwinpp_win_geo_w_h=(1400,1049 698,198 698,198 1400,1049 698,198 1400,1049 1400,1049)
+_xwinpp_win_frame_extents=(0,0,0,0 0,0,0,0 0,0,0,0 0,0,0,0 0,0,0,0 0,0,0,0 0,0,0,0)
+_xwinpp_win_tags=(null null null null null null null)
 ```
 
 ### Install

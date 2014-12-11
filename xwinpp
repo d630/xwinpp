@@ -22,7 +22,7 @@ builtin shopt -s extglob
 
 # -- FUNCTIONS.
 
-__xwinpp_version() { builtin echo "0.1.2.4" ; }
+__xwinpp_version() { builtin echo "0.1.2.5" ; }
 
 __xwinpp_usage() { builtin echo "xwinpp -I (-B|-b) [-D|-P|-t|-V] (-h|-p|-S|-v)" ; }
 
@@ -264,19 +264,19 @@ __xwinpp_set_position_win_active()
 
 __xwinpp_print_wins_list()
 {
-    builtin printf '%s\n' "desk_curr=$desk_curr
-desk_select=(${desk_select[*]})
-win_active=$win_active
-win_active_geo_x_y=(${win_active_geo_x_y[*]})
-win_active_geo_w_h=(${win_active_geo_w_h[*]})
-win_active_frame_extents=$win_active_frame_extents
-win_active_tags=$win_active_tags
-win_xid=(${win_xid[*]})
-win_number=${#win_xid[@]}
-win_geo_x_y=(${win_geo_x_y[*]})
-win_geo_w_h=(${win_geo_w_h[*]})
-win_frame_extents=(${win_frame_extents[*]})
-win_tags=(${win_tags[*]})"
+    builtin printf '%s\n' "_xwinpp_desk_curr=$desk_curr
+_xwinpp_desk_select=(${desk_select[*]})
+_xwinpp_win_active=$win_active
+_xwinpp_win_active_geo_x_y=(${win_active_geo_x_y[*]})
+_xwinpp_win_active_geo_w_h=(${win_active_geo_w_h[*]})
+_xwinpp_win_active_frame_extents=$win_active_frame_extents
+_xwinpp_win_active_tags=$win_active_tags
+_xwinpp_win_xid=(${win_xid[*]})
+_xwinpp_win_number=${#win_xid[@]}
+_xwinpp_win_geo_x_y=(${win_geo_x_y[*]})
+_xwinpp_win_geo_w_h=(${win_geo_w_h[*]})
+_xwinpp_win_frame_extents=(${win_frame_extents[*]})
+_xwinpp_win_tags=(${win_tags[*]})"
 }
 
 __xwinpp_tag()
