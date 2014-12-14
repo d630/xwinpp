@@ -96,7 +96,7 @@ do
             desk_number=$val
             ;;
         _NET_DESKTOP_NAMES)
-            desk_names=($val)
+            desk_names=(${val//\",/\"})
             ;;
         _NET_ACTIVE_WINDOW:)
             win_active=$val
@@ -458,7 +458,6 @@ __xwinpp_main()
                     desk_select[$j]=${desk_select[$j]#*:}
                     ;;
                 s:?*)
-                    desk_names=(${desk_names[@]//\",/\"})
                     for k in "${!desk_names[@]}"
                     do
                         [[ ${desk_names[$k]} == \"${desk_select[$j]#*:}\" ]] && \
