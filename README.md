@@ -1,4 +1,4 @@
-### xwinpp v0.1.2.5 [GNU GPLv3]
+### xwinpp v0.1.2.6 [GNU GPLv3]
 
 `xwinpp`(1) is a bash shell script, that takes a list of X window ids (of your EWMH/NetWM compatible X windo manager) and performs some actions on it. Mainly, `xwinpp`(1) was written to process a preparing output with variables on that list. A typical output looks like this:
 
