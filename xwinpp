@@ -22,7 +22,7 @@ builtin shopt -s extglob
 
 # -- FUNCTIONS.
 
-__xwinpp_version() { builtin echo "0.1.2.5" ; }
+__xwinpp_version() { builtin echo "0.1.2.6" ; }
 
 __xwinpp_usage() { builtin echo "xwinpp -I (-B|-b) [-D|-P|-t|-V] (-h|-p|-S|-v)" ; }
 
@@ -265,6 +265,9 @@ __xwinpp_set_position_win_active()
 __xwinpp_print_wins_list()
 {
     builtin printf '%s\n' "_xwinpp_desk_curr=$desk_curr
+_xwinpp_desk_number=$desk_number
+_xwinpp_desk_numbers=(${desk_numbers[*]})
+_xwinpp_desk_names=(${desk_names[*]})
 _xwinpp_desk_select=(${desk_select[*]})
 _xwinpp_win_active=$win_active
 _xwinpp_win_active_geo_x_y=(${win_active_geo_x_y[*]})
@@ -429,12 +432,13 @@ __xwinpp_main()
 
     __xwinpp_xprop "-root -notype _NET_CURRENT_DESKTOP _NET_NUMBER_OF_DESKTOPS _NET_DESKTOP_NAMES _NET_ACTIVE_WINDOW"
 
+    for ((i=0 ; i < $desk_number ; i++))
+    do
+        desk_numbers+=($i)
+    done
+
     if ((${#desk_select[@]} > 0))
     then
-        for ((i=0 ; i < $desk_number ; i++))
-        do
-            desk_numbers+=($i)
-        done
         for j in ${!desk_select[@]}
         do
             case ${desk_select[$j]} in
