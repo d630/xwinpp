@@ -1,4 +1,4 @@
-## xwinpp v0.1.2.5 [GNU GPLv3]
+### xwinpp v0.1.2.5 [GNU GPLv3]
 
 `xwinpp`(1) is a bash shell script, that takes a list of X window ids (of your EWMH/NetWM compatible X windo manager) and performs some actions on it. Mainly, `xwinpp`(1) was written to process a preparing output with variables on that list. A typical output looks like this:
 
@@ -18,7 +18,7 @@ _xwinpp_win_frame_extents=(0,0,0,0 0,0,0,0 0,0,0,0 0,0,0,0 0,0,0,0 0,0,0,0 0,0,0
 _xwinpp_win_tags=(null null null null null null null)
 ```
 
-### Install
+#### Install
 
 * Get the newest version of `xwinpp`(1) with `$ git clone https://github.com/D630/xwinpp.git` or
   download its last release on https://github.com/D630/xwinpp/tags
@@ -29,7 +29,7 @@ Explicitly required:
 - `xprop`(1)
 - `xwininfo`(1)
 
-### Options
+#### Options
 
 ```
 -B, --hidden
@@ -62,7 +62,7 @@ Explicitly required:
       can use this option.
 ```
 
-### Subcommands
+#### Subcommands
 
 ```
 -h, --help
@@ -79,7 +79,7 @@ Explicitly required:
       Print current version of xwinpp(1).
 ```
 
-### Arguments
+#### Arguments
 
 ```
 <DESK>      'any', 'curr' or relative to the current
@@ -106,7 +106,7 @@ Explicitly required:
 <XID>       Numeric window identity.
 ```
 
-### Examples
+#### Examples
 
 To print a preparing output:
 
@@ -145,7 +145,7 @@ wmctrl -l | xwinpp -I - -D curr -S tag:gui,viewer,pdf
 wmctrl -l | xwinpp -I - -B -S tag:
 ```
 
-### Environment
+#### Environment
 
 `XWINPP_WIN_ACTIVE`
 You may use this variable instead option `-V`.
@@ -153,19 +153,19 @@ You may use this variable instead option `-V`.
 `XWINPP_INPUT_FILE`
 Use this instead of option `-I`.
 
-### Notes
+#### Notes
 
 - You can write all long commands and options without masking `--`. So, instead of `--help` you may use help
 - You do not have to use `wmctrl`(1) for fetching X window ids. For example, you can also use `xdotool`(1), `xlsclients`(1), `xwit`(1), `xwininfo`(1), `xprop`(1) or `lsw`(1).  But  ensure  to  get an input, which is separated by newline; X window ids must be in the first field and  separated from  second  field with space character (delimiter=`[:space:]`). See also: https://github.com/D630/gist-bin-pub/tree/master/get-xids and http://www.ict.griffith.edu.au/anthony/info/X/WindowID.hints
 
-### To do
+#### To do
 
 See [file TODO](../master/doc/TODO.md)
 
-### Bugs & Requests
+#### Bugs & Requests
 
 Report it on https://github.com/D630/xwinpp/issues
 
-### See also
+#### See also
 
 https://github.com/D630/xwinreg
